@@ -21,7 +21,6 @@ RUN tdnf install -y \
 	socat \
 	tcpdump \
 	wget \
-	which \
 	&& tdnf clean all
 
 # TODO: set alternatives iptables -> iptables-nft
