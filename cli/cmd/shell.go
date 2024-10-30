@@ -35,5 +35,5 @@ var shellCmd = &cobra.Command{
 
 func init() {
 	Retina.AddCommand(shellCmd)
-	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace for the shell session")
+	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace for the shell session (applies only for pods, not nodes)")
 }
