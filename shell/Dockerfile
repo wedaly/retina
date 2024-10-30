@@ -17,6 +17,9 @@ RUN tdnf install -y \
 	bpftool \
 	ipset \
 	nmap \
-	socat
+	socat \
+	openssh \
+	iperf3 \
+	net-tools
 
 # TODO: set alternatives iptables -> iptables-nft
