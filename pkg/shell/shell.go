@@ -1,15 +1,66 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
+)
+
+const (
+	imageRepo    = "imageRepo"
+	imageVersion = "imageVersion"
 )
 
 func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error {
-	fmt.Printf("TODO: ns=%s, pod=%s\n", *configFlags.Namespace, podName)
-	// TODO: ephemeral pod in pod netns.
-	// TODO: how to get the image name/tag?
+	config, err := configFlags.ToRESTConfig()
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	namespace := *configFlags.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	ephemeralContainer := v1.EphemeralContainer{
+		EphemeralContainerCommon: v1.EphemeralContainerCommon{
+			Name:  "retina-shell",
+			Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
+			SecurityContext: &v1.SecurityContext{
+				Capabilities: &v1.Capabilities{
+					Add: []v1.Capability{"NET_ADMIN", "NET_RAW"},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	pod, err := clientset.CoreV1().
+		Pods(namespace).
+		Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	pod.Spec.EphemeralContainers = append(pod.Spec.EphemeralContainers, ephemeralContainer)
+
+	_, err = clientset.CoreV1().
+		Pods(namespace).
+		UpdateEphemeralContainers(ctx, podName, pod, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Ephemeral container added to pod %s\n", podName)
 	return nil
 }
 
