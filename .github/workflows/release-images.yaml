@@ -150,6 +150,8 @@ jobs:
               cosign sign --yes ${IMAGE_PATH}@${DIGEST} 
           done
 
+# TODO: update with retina-shell image
+
   manifests:
     name: Generate Manifests
     runs-on: ubuntu-latest

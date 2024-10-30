@@ -162,6 +162,8 @@ jobs:
         env:
           IS_MERGE_GROUP: ${{ github.event_name == 'merge_group' }}
 
+# TODO: update with retina-shell image
+
   manifests:
     if: ${{ github.event_name == 'merge_group' && success('retina-images') && success('retina-win-images') && success('operator-images')}} 
     name: Generate Manifests
