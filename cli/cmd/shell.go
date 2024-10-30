@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/microsoft/retina/pkg/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -13,16 +15,28 @@ var shellCmd = &cobra.Command{
 	Short: "Start a shell in a node or pod",
 	Long:  "Start a shell with networking tools in a node or pod for adhoc debugging.",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
-		fmt.Printf("Starting shell session with target: %s\n", target)
-		if namespace != "" {
-			fmt.Printf("Using namespace: %s\n", namespace)
+		targetParts := strings.SplitN(target, "/", 1)
+		if len(targetParts) != 2 {
+			return fmt.Errorf("target must be either pods/<pod> or nodes/<node>")
 		}
+
+		targetType, targetName := targetParts[0], targetParts[1]
+		if targetType == "pod" || targetType == "pods" {
+			return shell.RunInPod(targetName, namespace)
+
+		} else if targetType == "node" || targetType == "nodes" {
+			return shell.RunInNode(targetName)
+
+		} else {
+			return fmt.Errorf("target type must be either pods or nodes")
+		}
+		return nil
 	},
 }
 
 func init() {
 	Retina.AddCommand(shellCmd)
-	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for the shell session")
+	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace for the shell session")
 }
