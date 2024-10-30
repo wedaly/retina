@@ -35,6 +35,8 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
 			Name:  "retina-shell",
 			Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
+			Stdin: true,
+			TTY:   true,
 			SecurityContext: &v1.SecurityContext{
 				Capabilities: &v1.Capabilities{
 					Add: []v1.Capability{"NET_ADMIN", "NET_RAW"},
