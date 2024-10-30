@@ -191,6 +191,7 @@ RETINA_TOOLS_IMAGE				= $(IMAGE_NAMESPACE)/retina-tools
 RETINA_IMAGE 					= $(IMAGE_NAMESPACE)/retina-agent
 RETINA_INIT_IMAGE				= $(IMAGE_NAMESPACE)/retina-init
 RETINA_OPERATOR_IMAGE			= $(IMAGE_NAMESPACE)/retina-operator
+RETINA_SHELL_IMAGE				= $(IMAGE_NAMESPACE)/retina-shell
 RETINA_INTEGRATION_TEST_IMAGE	= $(IMAGE_NAMESPACE)/retina-integration-test
 RETINA_PROTO_IMAGE				= $(IMAGE_NAMESPACE)/retina-proto-gen
 RETINA_GO_GEN_IMAGE				= $(IMAGE_NAMESPACE)/retina-go-gen
@@ -305,6 +306,18 @@ retina-operator-image:  ## build the retina linux operator image.
 			VERSION=$(TAG) \
 			TAG=$(RETINA_PLATFORM_TAG) \
 			APP_INSIGHTS_ID=$(APP_INSIGHTS_ID) \
+			CONTEXT_DIR=$(REPO_ROOT)
+
+retina-shell-image:
+	echo "Building for $(PLATFORM)"
+	set -e ; \
+	$(MAKE) container-$(CONTAINER_BUILDER) \
+			PLATFORM=$(PLATFORM) \
+			DOCKERFILE=shell/Dockerfile \
+			REGISTRY=$(IMAGE_REGISTRY) \
+			IMAGE=$(RETINA_SHELL_IMAGE) \
+			VERSION=$(TAG) \
+			TAG=$(RETINA_PLATFORM_TAG) \
 			CONTEXT_DIR=$(REPO_ROOT)
 
 kapinger-image: 
