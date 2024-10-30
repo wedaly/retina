@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	imageRepo    = "imageRepo"
-	imageVersion = "imageVersion"
+	imageRepo    = "widalytest.azurecr.io/wedaly/retina/retina-shell"
+	imageVersion = "v0.0.16-122-g94ca3aa"
 )
 
 func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error {
