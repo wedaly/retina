@@ -31,6 +31,8 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 		namespace = "default"
 	}
 
+	// TODO: and open connection with stdin/stdout?
+	// TODO: what happens if you run this twice...?
 	ephemeralContainer := v1.EphemeralContainer{
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
 			Name:  "retina-shell",
