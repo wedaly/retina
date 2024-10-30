@@ -17,7 +17,7 @@ var shellCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
-		targetParts := strings.SplitN(target, "/", 1)
+		targetParts := strings.SplitN(target, "/", 2)
 		if len(targetParts) != 2 {
 			return fmt.Errorf("target must be either pods/<pod> or nodes/<node>")
 		}
@@ -25,14 +25,11 @@ var shellCmd = &cobra.Command{
 		targetType, targetName := targetParts[0], targetParts[1]
 		if targetType == "pod" || targetType == "pods" {
 			return shell.RunInPod(targetName, namespace)
-
 		} else if targetType == "node" || targetType == "nodes" {
 			return shell.RunInNode(targetName)
-
 		} else {
 			return fmt.Errorf("target type must be either pods or nodes")
 		}
-		return nil
 	},
 }
 
