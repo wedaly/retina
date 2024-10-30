@@ -9,10 +9,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-var (
-	configFlags *genericclioptions.ConfigFlags
-	namespace   string
-)
+var configFlags *genericclioptions.ConfigFlags
 
 var shellCmd = &cobra.Command{
 	Use:   "shell [target]",
@@ -28,7 +25,7 @@ var shellCmd = &cobra.Command{
 
 		targetType, targetName := targetParts[0], targetParts[1]
 		if targetType == "pod" || targetType == "pods" {
-			return shell.RunInPod(configFlags, targetName, namespace)
+			return shell.RunInPod(configFlags, targetName)
 		} else if targetType == "node" || targetType == "nodes" {
 			return shell.RunInNode(configFlags, targetName)
 		} else {
@@ -41,5 +38,4 @@ func init() {
 	Retina.AddCommand(shellCmd)
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())
-	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Namespace for the shell session (applies only for pods, not nodes)")
 }
