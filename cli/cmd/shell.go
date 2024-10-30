@@ -8,11 +8,10 @@ import (
 
 var namespace string
 
-// shellCmd represents the shell command
 var shellCmd = &cobra.Command{
 	Use:   "shell [target]",
-	Short: "Start a shell session",
-	Long:  `Start a shell session with the specified target.`,
+	Short: "Start a shell in a node or pod",
+	Long:  "Start a shell with networking tools in a node or pod for adhoc debugging.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		target := args[0]
@@ -25,7 +24,5 @@ var shellCmd = &cobra.Command{
 
 func init() {
 	Retina.AddCommand(shellCmd)
-
-	// Define the namespace flag
 	shellCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace for the shell session")
 }
