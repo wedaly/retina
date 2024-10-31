@@ -47,7 +47,6 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 				},
 			},
 		},
-		// TODO: what command is it running? how does it stay up?
 	}
 
 	ctx := context.Background()
@@ -64,6 +63,12 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 		Pods(namespace).
 		UpdateEphemeralContainers(ctx, podName, pod, metav1.UpdateOptions{})
 	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, ephemeralContainer.Name); err != nil {
 		return err
 	}
 
@@ -120,8 +125,11 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 		return err
 	}
 
-	// TODO: wait for contianer running
-	time.Sleep(10 * time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, pod.Spec.Containers[0].Name); err != nil {
+		return err
+	}
 
 	// TODO: delete on exit...
 	return attachToShell(restConfig, namespace, pod.Name, pod.Spec.Containers[0].Name, pod)
@@ -150,4 +158,27 @@ func attachToShell(restConfig *rest.Config, namespace string, podName string, co
 	}
 
 	return attachOpts.Run()
+}
+
+func waitForContainerRunning(ctx context.Context, clientset *kubernetes.Clientset, namespace, podName, containerName string) error {
+	for {
+		pod, err := clientset.CoreV1().
+			Pods(namespace).
+			Get(ctx, podName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, status := range pod.Status.ContainerStatuses {
+			if status.Name == containerName && status.State.Running != nil {
+				return nil
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timed out waiting for container %s to start", containerName)
+		case <-time.After(1 * time.Second):
+		}
+	}
 }
