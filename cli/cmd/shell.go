@@ -10,6 +10,7 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/scheme"
+	"k8s.io/kubectl/pkg/util/templates"
 )
 
 var (
@@ -18,10 +19,20 @@ var (
 )
 
 var shellCmd = &cobra.Command{
-	Use:   "shell (POD | TYPE[[.VERSION].GROUP]/NAME)",
+	Use:   "shell (NODE | TYPE[[.VERSION].GROUP]/NAME)",
 	Short: "Start a shell in a node or pod",
-	Long:  "Start a shell with networking tools in a node or pod for adhoc debugging.",
-	Args:  cobra.ExactArgs(1),
+	Long:  templates.LongDesc("Start a shell with networking tools in a node or pod for adhoc debugging."),
+	Example: templates.Examples(`
+		# start a shell in a node
+		kubectl retina shell node0001
+
+		# start a shell in a node, with debug pod in kube-system namespace
+		kubectl retina shell -n kube-system node0001
+
+		# start a shell in a pod
+		kubectl retina shell -n kube-system pod/coredns-d459997b4-7cpzx
+`),
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		namespace, explicitNamespace, err := matchVersionFlags.ToRawKubeConfigLoader().Namespace()
 		if err != nil {
