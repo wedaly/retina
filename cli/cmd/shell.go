@@ -14,11 +14,12 @@ import (
 )
 
 var (
-	configFlags             *genericclioptions.ConfigFlags
-	matchVersionFlags       *cmdutil.MatchVersionFlags
-	retinaShellImage        string
-	defaultRetinaShellImage string
+	configFlags       *genericclioptions.ConfigFlags
+	matchVersionFlags *cmdutil.MatchVersionFlags
+	retinaShellImage  string
 )
+
+var defaultRetinaShellImage string
 
 func init() {
 	const defaultRetinaShellImageRepo = "widalytest.azurecr.io/wedaly/retina/retina-shell" // TODO: replace with something official
