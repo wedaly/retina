@@ -22,8 +22,8 @@ var (
 var defaultRetinaShellImage string
 
 func init() {
-	const defaultRetinaShellImageRepo = "widalytest.azurecr.io/wedaly/retina/retina-shell" // TODO: replace with something official
-	defaultRetinaShellImage = fmt.Sprintf("%s:%s", defaultRetinaShellImageRepo, Version)   // match CLI version
+	const defaultRetinaShellImageRepo = "mcr.microsoft.com/containernetworking/retina-shell" // TODO: This doesn't exist yet
+	defaultRetinaShellImage = fmt.Sprintf("%s:%s", defaultRetinaShellImageRepo, Version)     // match CLI version
 }
 
 var shellCmd = &cobra.Command{
