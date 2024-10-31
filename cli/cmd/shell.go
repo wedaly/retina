@@ -44,6 +44,7 @@ var shellCmd = &cobra.Command{
 }
 
 func init() {
+	// TODO: suppress error output
 	Retina.AddCommand(shellCmd)
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())

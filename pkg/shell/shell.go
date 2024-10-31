@@ -82,7 +82,8 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
+			Name:      fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
+			Namespace: namespace,
 		},
 		Spec: v1.PodSpec{
 			NodeName:      nodeName,
@@ -118,6 +119,7 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 		return err
 	}
 
+	// TODO: delete on exit...
 	return attachToShell(restConfig, namespace, pod.Name, pod.Spec.Containers[0].Name, pod)
 }
 
