@@ -46,6 +46,7 @@ var shellCmd = &cobra.Command{
 func init() {
 	Retina.AddCommand(shellCmd)
 	configFlags = genericclioptions.NewConfigFlags(true)
+	configFlags.AddFlags(shellCmd.PersistentFlags())
 	matchVersionFlags = cmdutil.NewMatchVersionFlags(configFlags)
 	matchVersionFlags.AddFlags(shellCmd.PersistentFlags())
 }

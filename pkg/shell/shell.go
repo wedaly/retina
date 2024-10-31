@@ -80,6 +80,7 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 			Stdin: true,
 			TTY:   true,
 		},
+		Attach:      &attach.DefaultRemoteAttach{},
 		AttachFunc:  attach.DefaultAttachFunc,
 		Pod:         pod,
 		CommandName: "bash", // TODO: const
