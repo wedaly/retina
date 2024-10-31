@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -17,25 +16,24 @@ import (
 	"k8s.io/kubectl/pkg/cmd/exec"
 )
 
-const (
-	retinaShellCmd = "bash"
-)
+const retinaShellCmd = "bash"
 
-func RunInPod(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, podName string) error {
-	clientset, err := kubernetes.NewForConfig(restConfig)
+type Config struct {
+	RestConfig          *rest.Config
+	RetinaShellImage    string
+	MountHostFilesystem bool
+}
+
+func RunInPod(config Config, podNamespace string, podName string) error {
+	clientset, err := kubernetes.NewForConfig(config.RestConfig)
 	if err != nil {
 		return err
-	}
-
-	namespace := *configFlags.Namespace
-	if namespace == "" {
-		namespace = "default"
 	}
 
 	ephemeralContainer := v1.EphemeralContainer{
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
 			Name:  fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
-			Image: retinaShellImage,
+			Image: config.RetinaShellImage,
 			Stdin: true,
 			TTY:   true,
 			SecurityContext: &v1.SecurityContext{
@@ -49,7 +47,7 @@ func RunInPod(retinaShellImage string, restConfig *rest.Config, configFlags *gen
 
 	ctx := context.Background()
 	pod, err := clientset.CoreV1().
-		Pods(namespace).
+		Pods(podNamespace).
 		Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -58,34 +56,29 @@ func RunInPod(retinaShellImage string, restConfig *rest.Config, configFlags *gen
 	pod.Spec.EphemeralContainers = append(pod.Spec.EphemeralContainers, ephemeralContainer)
 
 	_, err = clientset.CoreV1().
-		Pods(namespace).
+		Pods(podNamespace).
 		UpdateEphemeralContainers(ctx, podName, pod, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 
-	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, ephemeralContainer.Name); err != nil {
+	if err := waitForContainerRunning(ctx, clientset, podNamespace, podName, ephemeralContainer.Name); err != nil {
 		return err
 	}
 
-	return attachToShell(restConfig, namespace, podName, ephemeralContainer.Name, pod)
+	return attachToShell(config.RestConfig, podNamespace, podName, ephemeralContainer.Name, pod)
 }
 
-func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string, mountHostFilesystem bool) error {
-	clientset, err := kubernetes.NewForConfig(restConfig)
+func RunInNode(config Config, nodeName string, debugPodNamespace string) error {
+	clientset, err := kubernetes.NewForConfig(config.RestConfig)
 	if err != nil {
 		return err
-	}
-
-	namespace := *configFlags.Namespace
-	if namespace == "" {
-		namespace = "default"
 	}
 
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
-			Namespace: namespace,
+			Namespace: debugPodNamespace,
 		},
 		Spec: v1.PodSpec{
 			NodeName:      nodeName,
@@ -95,7 +88,7 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 			Containers: []v1.Container{
 				{
 					Name:  "retina-shell",
-					Image: retinaShellImage,
+					Image: config.RetinaShellImage,
 					Stdin: true,
 					TTY:   true,
 					SecurityContext: &v1.SecurityContext{
@@ -109,7 +102,7 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 		},
 	}
 
-	if mountHostFilesystem {
+	if config.MountHostFilesystem {
 		pod.Spec.Volumes = []v1.Volume{
 			{
 				Name: "host-filesystem",
@@ -133,7 +126,7 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 	// Create the pod
 	ctx := context.Background()
 	_, err = clientset.CoreV1().
-		Pods(namespace).
+		Pods(debugPodNamespace).
 		Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
@@ -142,19 +135,18 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 	defer func() {
 		// Best-effort cleanup.
 		err := clientset.CoreV1().
-			Pods(namespace).
+			Pods(debugPodNamespace).
 			Delete(ctx, pod.Name, metav1.DeleteOptions{})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to delete pod %s: %v\n", pod.Name, err)
 		}
 	}()
 
-	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, pod.Spec.Containers[0].Name); err != nil {
+	if err := waitForContainerRunning(ctx, clientset, debugPodNamespace, pod.Name, pod.Spec.Containers[0].Name); err != nil {
 		return err
 	}
 
-	// TODO: delete on exit...
-	return attachToShell(restConfig, namespace, pod.Name, pod.Spec.Containers[0].Name, pod)
+	return attachToShell(config.RestConfig, debugPodNamespace, pod.Name, pod.Spec.Containers[0].Name, pod)
 }
 
 func attachToShell(restConfig *rest.Config, namespace string, podName string, containerName string, pod *v1.Pod) error {

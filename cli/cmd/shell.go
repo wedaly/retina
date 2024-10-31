@@ -65,13 +65,18 @@ var shellCmd = &cobra.Command{
 			return err
 		}
 
-		// TODO: cleanup, consolidate args into a struct
+		config := shell.Config{
+			RestConfig:          restConfig,
+			RetinaShellImage:    retinaShellImage,
+			MountHostFilesystem: mountHostFilesystem,
+		}
+
 		return r.Visit(func(info *resource.Info, err error) error {
 			switch obj := info.Object.(type) {
 			case *v1.Node:
-				return shell.RunInNode(retinaShellImage, restConfig, configFlags, obj.Name, mountHostFilesystem)
+				return shell.RunInNode(config, obj.Name, namespace)
 			case *v1.Pod:
-				return shell.RunInPod(retinaShellImage, restConfig, configFlags, obj.Name)
+				return shell.RunInPod(config, namespace, obj.Name)
 			default:
 				gvk := obj.GetObjectKind().GroupVersionKind()
 				return fmt.Errorf("unsupported resource %s/%s", gvk.GroupVersion(), gvk.Kind)
