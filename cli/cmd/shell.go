@@ -74,9 +74,11 @@ var shellCmd = &cobra.Command{
 		return r.Visit(func(info *resource.Info, err error) error {
 			switch obj := info.Object.(type) {
 			case *v1.Node:
-				return shell.RunInNode(config, obj.Name, namespace)
+				podDebugNamespace := namespace
+				nodeName := obj.Name
+				return shell.RunInNode(config, nodeName, podDebugNamespace)
 			case *v1.Pod:
-				return shell.RunInPod(config, namespace, obj.Name)
+				return shell.RunInPod(config, obj.Namespace, obj.Name)
 			default:
 				gvk := obj.GetObjectKind().GroupVersionKind()
 				return fmt.Errorf("unsupported resource %s/%s", gvk.GroupVersion(), gvk.Kind)
