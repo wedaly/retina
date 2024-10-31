@@ -19,8 +19,9 @@ import (
 
 const (
 	// TODO: move to config and/or make overridable? or based on CLI retina version
-	imageRepo    = "widalytest.azurecr.io/wedaly/retina/retina-shell"
-	imageVersion = "v0.0.16-122-g94ca3aa"
+	imageRepo      = "widalytest.azurecr.io/wedaly/retina/retina-shell"
+	imageVersion   = "v0.0.16-122-g94ca3aa"
+	retinaShellCmd = "bash"
 )
 
 func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, podName string) error {
@@ -160,7 +161,7 @@ func attachToShell(restConfig *rest.Config, namespace string, podName string, co
 		Attach:      &attach.DefaultRemoteAttach{},
 		AttachFunc:  attach.DefaultAttachFunc,
 		Pod:         pod,
-		CommandName: "bash", // TODO: const
+		CommandName: retinaShellCmd,
 	}
 
 	return attachOpts.Run()
