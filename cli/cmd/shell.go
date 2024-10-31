@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/microsoft/retina/pkg/shell"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/resource"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 var (
@@ -16,30 +18,43 @@ var (
 )
 
 var shellCmd = &cobra.Command{
-	Use:   "shell [target]",
+	Use:   "shell (POD | TYPE[[.VERSION].GROUP]/NAME)",
 	Short: "Start a shell in a node or pod",
 	Long:  "Start a shell with networking tools in a node or pod for adhoc debugging.",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
-		targetParts := strings.SplitN(target, "/", 2)
-		if len(targetParts) != 2 {
-			return fmt.Errorf("target must be either pods/<pod> or nodes/<node>")
-		}
 
 		restConfig, err := matchVersionFlags.ToRESTConfig()
 		if err != nil {
 			return err
 		}
 
-		targetType, targetName := targetParts[0], targetParts[1]
-		if targetType == "pod" || targetType == "pods" {
-			return shell.RunInPod(restConfig, configFlags, targetName)
-		} else if targetType == "node" || targetType == "nodes" {
-			return shell.RunInNode(restConfig, configFlags, targetName)
-		} else {
-			return fmt.Errorf("target type must be either pods or nodes")
+		namespace, explicitNamespace, err := matchVersionFlags.ToRawKubeConfigLoader().Namespace()
+		if err != nil {
+			return err
 		}
+
+		r := resource.NewBuilder(configFlags).
+			WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
+			FilenameParam(explicitNamespace, &resource.FilenameOptions{}).
+			NamespaceParam(namespace).DefaultNamespace().ResourceNames("nodes", target).
+			Do()
+		if err := r.Err(); err != nil {
+			return err
+		}
+
+		return r.Visit(func(info *resource.Info, err error) error {
+			switch obj := info.Object.(type) {
+			case *v1.Node:
+				return shell.RunInNode(restConfig, configFlags, obj.Name)
+			case *v1.Pod:
+				return shell.RunInPod(restConfig, configFlags, obj.Name)
+			default:
+				gvk := obj.GetObjectKind().GroupVersionKind()
+				return fmt.Errorf("unsupported resource %s/%s", gvk.GroupVersion(), gvk.Kind)
+			}
+		})
 	},
 }
 
