@@ -174,6 +174,11 @@ func waitForContainerRunning(ctx context.Context, clientset *kubernetes.Clientse
 				return nil
 			}
 		}
+		for _, status := range pod.Status.EphemeralContainerStatuses {
+			if status.Name == containerName && status.State.Running != nil {
+				return nil
+			}
+		}
 
 		select {
 		case <-ctx.Done():
