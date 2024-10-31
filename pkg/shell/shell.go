@@ -3,12 +3,16 @@ package shell
 import (
 	"context"
 	"fmt"
+	"os"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubectl/pkg/cmd/attach"
+	"k8s.io/kubectl/pkg/cmd/exec"
 )
 
 const (
@@ -64,8 +68,28 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 		return err
 	}
 
-	fmt.Printf("Ephemeral container added to pod %s\n", podName)
-	return nil
+	// TODO: poll for container ready status
+
+	attachOpts := &attach.AttachOptions{
+		Config: config,
+		StreamOptions: exec.StreamOptions{
+			Namespace:     namespace,
+			PodName:       podName,
+			ContainerName: ephemeralContainer.Name,
+			IOStreams: genericiooptions.IOStreams{
+				In:     os.Stdin,
+				Out:    os.Stdout,
+				ErrOut: os.Stderr,
+			},
+			Stdin: true,
+			TTY:   true,
+		},
+		CommandName: "bash", // TODO: const
+		AttachFunc:  attach.DefaultAttachFunc,
+		Pod:         pod,
+	}
+
+	return attachOpts.Run()
 }
 
 func RunInNode(configFlags *genericclioptions.ConfigFlags, nodeName string) error {
