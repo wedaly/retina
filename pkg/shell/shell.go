@@ -41,10 +41,12 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 			TTY:   true,
 			SecurityContext: &v1.SecurityContext{
 				Capabilities: &v1.Capabilities{
-					Add: []v1.Capability{"NET_ADMIN", "NET_RAW"},
+					Drop: []v1.Capability{"ALL"},
+					Add:  []v1.Capability{"NET_ADMIN", "NET_RAW"},
 				},
 			},
 		},
+		// TODO: what command is it running? how does it stay up?
 	}
 
 	ctx := context.Background()
@@ -64,17 +66,62 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 		return err
 	}
 
-	return attachToEphemeralContainer(restConfig, namespace, podName, ephemeralContainer.Name, pod)
+	return attachToShell(restConfig, namespace, podName, ephemeralContainer.Name, pod)
 }
 
 func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
-	// TODO: ephemeral pod in node.
-	// TODO: how to get the image name/tag?
-	fmt.Printf("TODO: node=%s\n", nodeName)
-	return nil
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+
+	namespace := *configFlags.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	pod := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
+		},
+		Spec: v1.PodSpec{
+			NodeName:      nodeName,
+			RestartPolicy: v1.RestartPolicyNever,
+			Tolerations:   []v1.Toleration{{Operator: v1.TolerationOpExists}},
+			HostNetwork:   true,
+			// TODO: HostPID? HostIPC?
+			Containers: []v1.Container{
+				{
+					Name:  "retina-shell",
+					Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
+					Stdin: true,
+					TTY:   true,
+					SecurityContext: &v1.SecurityContext{
+						Capabilities: &v1.Capabilities{
+							Drop: []v1.Capability{"ALL"},
+							Add:  []v1.Capability{"NET_ADMIN", "NET_RAW"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// TODO: optional host volume
+
+	// Create the pod
+	ctx := context.Background()
+	_, err = clientset.CoreV1().
+		Pods(namespace).
+		Create(ctx, pod, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return attachToShell(restConfig, namespace, pod.Name, pod.Spec.Containers[0].Name, pod)
 }
 
-func attachToEphemeralContainer(restConfig *rest.Config, namespace string, podName string, containerName string, pod *v1.Pod) error {
+func attachToShell(restConfig *rest.Config, namespace string, podName string, containerName string, pod *v1.Pod) error {
 	attachOpts := &attach.AttachOptions{
 		Config: restConfig,
 		StreamOptions: exec.StreamOptions{
