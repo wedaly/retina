@@ -79,6 +79,7 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 			},
 			Stdin: true,
 			TTY:   true,
+			Quiet: true,
 		},
 		Attach:      &attach.DefaultRemoteAttach{},
 		AttachFunc:  attach.DefaultAttachFunc,
