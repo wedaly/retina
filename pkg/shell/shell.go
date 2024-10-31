@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,6 +119,9 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 	if err != nil {
 		return err
 	}
+
+	// TODO: wait for contianer running
+	time.Sleep(10 * time.Second)
 
 	// TODO: delete on exit...
 	return attachToShell(restConfig, namespace, pod.Name, pod.Spec.Containers[0].Name, pod)
