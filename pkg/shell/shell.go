@@ -32,7 +32,6 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 		namespace = "default"
 	}
 
-	// TODO: and open connection with stdin/stdout?
 	ephemeralContainer := v1.EphemeralContainer{
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
 			Name:  fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
