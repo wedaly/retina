@@ -14,9 +14,16 @@ import (
 )
 
 var (
-	configFlags       *genericclioptions.ConfigFlags
-	matchVersionFlags *cmdutil.MatchVersionFlags
+	configFlags             *genericclioptions.ConfigFlags
+	matchVersionFlags       *cmdutil.MatchVersionFlags
+	retinaShellImage        string
+	defaultRetinaShellImage string
 )
+
+func init() {
+	const defaultRetinaShellImageRepo = "widalytest.azurecr.io/wedaly/retina/retina-shell" // TODO: replace with something official
+	defaultRetinaShellImage = fmt.Sprintf("%s:%s", defaultRetinaShellImageRepo, Version)   // match CLI version
+}
 
 var shellCmd = &cobra.Command{
 	Use:   "shell (NODE | TYPE[[.VERSION].GROUP]/NAME)",
@@ -56,9 +63,9 @@ var shellCmd = &cobra.Command{
 		return r.Visit(func(info *resource.Info, err error) error {
 			switch obj := info.Object.(type) {
 			case *v1.Node:
-				return shell.RunInNode(restConfig, configFlags, obj.Name)
+				return shell.RunInNode(retinaShellImage, restConfig, configFlags, obj.Name)
 			case *v1.Pod:
-				return shell.RunInPod(restConfig, configFlags, obj.Name)
+				return shell.RunInPod(retinaShellImage, restConfig, configFlags, obj.Name)
 			default:
 				gvk := obj.GetObjectKind().GroupVersionKind()
 				return fmt.Errorf("unsupported resource %s/%s", gvk.GroupVersion(), gvk.Kind)
@@ -73,6 +80,7 @@ func init() {
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
 	}
+	shellCmd.Flags().StringVar(&retinaShellImage, "retina-shell-image", defaultRetinaShellImage, "The image to use for the shell container")
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())
 	matchVersionFlags = cmdutil.NewMatchVersionFlags(configFlags)

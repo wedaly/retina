@@ -18,13 +18,10 @@ import (
 )
 
 const (
-	// TODO: move to config and/or make overridable? or based on CLI retina version
-	imageRepo      = "widalytest.azurecr.io/wedaly/retina/retina-shell"
-	imageVersion   = "v0.0.16-122-g94ca3aa"
 	retinaShellCmd = "bash"
 )
 
-func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, podName string) error {
+func RunInPod(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, podName string) error {
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return err
@@ -38,7 +35,7 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 	ephemeralContainer := v1.EphemeralContainer{
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
 			Name:  fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
-			Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
+			Image: retinaShellImage,
 			Stdin: true,
 			TTY:   true,
 			SecurityContext: &v1.SecurityContext{
@@ -74,7 +71,7 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 	return attachToShell(restConfig, namespace, podName, ephemeralContainer.Name, pod)
 }
 
-func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
+func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return err
@@ -99,7 +96,7 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 			Containers: []v1.Container{
 				{
 					Name:  "retina-shell",
-					Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
+					Image: retinaShellImage,
 					Stdin: true,
 					TTY:   true,
 					SecurityContext: &v1.SecurityContext{
