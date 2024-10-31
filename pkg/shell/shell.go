@@ -66,8 +66,6 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, ephemeralContainer.Name); err != nil {
 		return err
 	}
@@ -125,8 +123,16 @@ func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFla
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	defer func() {
+		// Best-effort cleanup.
+		err := clientset.CoreV1().
+			Pods(namespace).
+			Delete(ctx, pod.Name, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to delete pod %s: %v\n", pod.Name, err)
+		}
+	}()
+
 	if err := waitForContainerRunning(ctx, clientset, namespace, pod.Name, pod.Spec.Containers[0].Name); err != nil {
 		return err
 	}
@@ -161,6 +167,8 @@ func attachToShell(restConfig *rest.Config, namespace string, podName string, co
 }
 
 func waitForContainerRunning(ctx context.Context, clientset *kubernetes.Clientset, namespace, podName, containerName string) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 	for {
 		pod, err := clientset.CoreV1().
 			Pods(namespace).
