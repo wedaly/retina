@@ -11,6 +11,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/kubectl/pkg/cmd/attach"
 	"k8s.io/kubectl/pkg/cmd/exec"
 )
@@ -20,13 +21,8 @@ const (
 	imageVersion = "v0.0.16-122-g94ca3aa"
 )
 
-func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error {
-	config, err := configFlags.ToRESTConfig()
-	if err != nil {
-		return err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
+func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, podName string) error {
+	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return err
 	}
@@ -71,7 +67,7 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 	// TODO: poll for container ready status
 
 	attachOpts := &attach.AttachOptions{
-		Config: config,
+		Config: restConfig,
 		StreamOptions: exec.StreamOptions{
 			Namespace:     namespace,
 			PodName:       podName,
@@ -84,15 +80,15 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 			Stdin: true,
 			TTY:   true,
 		},
-		CommandName: "bash", // TODO: const
 		AttachFunc:  attach.DefaultAttachFunc,
 		Pod:         pod,
+		CommandName: "bash", // TODO: const
 	}
 
 	return attachOpts.Run()
 }
 
-func RunInNode(configFlags *genericclioptions.ConfigFlags, nodeName string) error {
+func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
 	// TODO: ephemeral pod in node.
 	// TODO: how to get the image name/tag?
 	fmt.Printf("TODO: node=%s\n", nodeName)

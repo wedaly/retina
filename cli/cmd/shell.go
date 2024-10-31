@@ -7,9 +7,13 @@ import (
 	"github.com/microsoft/retina/pkg/shell"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
-var configFlags *genericclioptions.ConfigFlags
+var (
+	configFlags       *genericclioptions.ConfigFlags
+	matchVersionFlags *cmdutil.MatchVersionFlags
+)
 
 var shellCmd = &cobra.Command{
 	Use:   "shell [target]",
@@ -23,11 +27,16 @@ var shellCmd = &cobra.Command{
 			return fmt.Errorf("target must be either pods/<pod> or nodes/<node>")
 		}
 
+		restConfig, err := matchVersionFlags.ToRESTConfig()
+		if err != nil {
+			return err
+		}
+
 		targetType, targetName := targetParts[0], targetParts[1]
 		if targetType == "pod" || targetType == "pods" {
-			return shell.RunInPod(configFlags, targetName)
+			return shell.RunInPod(restConfig, configFlags, targetName)
 		} else if targetType == "node" || targetType == "nodes" {
-			return shell.RunInNode(configFlags, targetName)
+			return shell.RunInNode(restConfig, configFlags, targetName)
 		} else {
 			return fmt.Errorf("target type must be either pods or nodes")
 		}
@@ -37,5 +46,6 @@ var shellCmd = &cobra.Command{
 func init() {
 	Retina.AddCommand(shellCmd)
 	configFlags = genericclioptions.NewConfigFlags(true)
-	configFlags.AddFlags(shellCmd.PersistentFlags())
+	matchVersionFlags = cmdutil.NewMatchVersionFlags(configFlags)
+	matchVersionFlags.AddFlags(shellCmd.PersistentFlags())
 }
