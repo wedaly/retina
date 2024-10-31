@@ -6,6 +6,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 )
@@ -32,10 +33,9 @@ func RunInPod(configFlags *genericclioptions.ConfigFlags, podName string) error 
 	}
 
 	// TODO: and open connection with stdin/stdout?
-	// TODO: what happens if you run this twice...?
 	ephemeralContainer := v1.EphemeralContainer{
 		EphemeralContainerCommon: v1.EphemeralContainerCommon{
-			Name:  "retina-shell",
+			Name:  fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
 			Image: fmt.Sprintf("%s:%s", imageRepo, imageVersion),
 			Stdin: true,
 			TTY:   true,
