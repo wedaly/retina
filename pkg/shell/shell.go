@@ -71,7 +71,7 @@ func RunInPod(retinaShellImage string, restConfig *rest.Config, configFlags *gen
 	return attachToShell(restConfig, namespace, podName, ephemeralContainer.Name, pod)
 }
 
-func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
+func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string, mountHostFilesystem bool) error {
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return err
@@ -92,7 +92,6 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 			RestartPolicy: v1.RestartPolicyNever,
 			Tolerations:   []v1.Toleration{{Operator: v1.TolerationOpExists}},
 			HostNetwork:   true,
-			// TODO: HostPID? HostIPC?
 			Containers: []v1.Container{
 				{
 					Name:  "retina-shell",
@@ -110,7 +109,26 @@ func RunInNode(retinaShellImage string, restConfig *rest.Config, configFlags *ge
 		},
 	}
 
-	// TODO: optional host volume
+	if mountHostFilesystem {
+		pod.Spec.Volumes = []v1.Volume{
+			{
+				Name: "host-filesystem",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: "/",
+					},
+				},
+			},
+		}
+		pod.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "host-filesystem",
+				MountPath: "/host",
+			},
+		}
+
+		pod.Spec.Containers[0].SecurityContext.Capabilities.Add = append(pod.Spec.Containers[0].SecurityContext.Capabilities.Add, "SYS_CHROOT")
+	}
 
 	// Create the pod
 	ctx := context.Background()

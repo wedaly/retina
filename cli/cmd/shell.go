@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	configFlags       *genericclioptions.ConfigFlags
-	matchVersionFlags *cmdutil.MatchVersionFlags
-	retinaShellImage  string
+	configFlags         *genericclioptions.ConfigFlags
+	matchVersionFlags   *cmdutil.MatchVersionFlags
+	retinaShellImage    string
+	mountHostFilesystem bool
 )
 
 var defaultRetinaShellImage string
@@ -36,6 +37,9 @@ var shellCmd = &cobra.Command{
 
 		# start a shell in a node, with debug pod in kube-system namespace
 		kubectl retina shell -n kube-system node0001
+
+		# start a shell in a node, mounting the host filesystem to /host
+		kubectl retina shell node001 --mount-host-filesystem
 
 		# start a shell in a pod
 		kubectl retina shell -n kube-system pod/coredns-d459997b4-7cpzx
@@ -61,10 +65,11 @@ var shellCmd = &cobra.Command{
 			return err
 		}
 
+		// TODO: cleanup, consolidate args into a struct
 		return r.Visit(func(info *resource.Info, err error) error {
 			switch obj := info.Object.(type) {
 			case *v1.Node:
-				return shell.RunInNode(retinaShellImage, restConfig, configFlags, obj.Name)
+				return shell.RunInNode(retinaShellImage, restConfig, configFlags, obj.Name, mountHostFilesystem)
 			case *v1.Pod:
 				return shell.RunInPod(retinaShellImage, restConfig, configFlags, obj.Name)
 			default:
@@ -82,6 +87,7 @@ func init() {
 		cmd.SilenceErrors = true
 	}
 	shellCmd.Flags().StringVar(&retinaShellImage, "retina-shell-image", defaultRetinaShellImage, "The image to use for the shell container")
+	shellCmd.Flags().BoolVar(&mountHostFilesystem, "mount-host-filesystem", false, "Mount the host filesystem to /host and add allow chroot. Applies only to nodes, not pods.")
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())
 	matchVersionFlags = cmdutil.NewMatchVersionFlags(configFlags)
