@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	// TODO: move to config and/or make overridable? or based on CLI retina version
 	imageRepo    = "widalytest.azurecr.io/wedaly/retina/retina-shell"
 	imageVersion = "v0.0.16-122-g94ca3aa"
 )
@@ -63,14 +64,23 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 		return err
 	}
 
-	// TODO: poll for container ready status
+	return attachToEphemeralContainer(restConfig, namespace, podName, ephemeralContainer.Name, pod)
+}
 
+func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
+	// TODO: ephemeral pod in node.
+	// TODO: how to get the image name/tag?
+	fmt.Printf("TODO: node=%s\n", nodeName)
+	return nil
+}
+
+func attachToEphemeralContainer(restConfig *rest.Config, namespace string, podName string, containerName string, pod *v1.Pod) error {
 	attachOpts := &attach.AttachOptions{
 		Config: restConfig,
 		StreamOptions: exec.StreamOptions{
 			Namespace:     namespace,
 			PodName:       podName,
-			ContainerName: ephemeralContainer.Name,
+			ContainerName: containerName,
 			IOStreams: genericiooptions.IOStreams{
 				In:     os.Stdin,
 				Out:    os.Stdout,
@@ -87,11 +97,4 @@ func RunInPod(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlag
 	}
 
 	return attachOpts.Run()
-}
-
-func RunInNode(restConfig *rest.Config, configFlags *genericclioptions.ConfigFlags, nodeName string) error {
-	// TODO: ephemeral pod in node.
-	// TODO: how to get the image name/tag?
-	fmt.Printf("TODO: node=%s\n", nodeName)
-	return nil
 }
