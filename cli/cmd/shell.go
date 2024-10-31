@@ -23,13 +23,6 @@ var shellCmd = &cobra.Command{
 	Long:  "Start a shell with networking tools in a node or pod for adhoc debugging.",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		target := args[0]
-
-		restConfig, err := matchVersionFlags.ToRESTConfig()
-		if err != nil {
-			return err
-		}
-
 		namespace, explicitNamespace, err := matchVersionFlags.ToRawKubeConfigLoader().Namespace()
 		if err != nil {
 			return err
@@ -38,9 +31,14 @@ var shellCmd = &cobra.Command{
 		r := resource.NewBuilder(configFlags).
 			WithScheme(scheme.Scheme, scheme.Scheme.PrioritizedVersionsAllGroups()...).
 			FilenameParam(explicitNamespace, &resource.FilenameOptions{}).
-			NamespaceParam(namespace).DefaultNamespace().ResourceNames("nodes", target).
+			NamespaceParam(namespace).DefaultNamespace().ResourceNames("nodes", args[0]).
 			Do()
 		if err := r.Err(); err != nil {
+			return err
+		}
+
+		restConfig, err := matchVersionFlags.ToRESTConfig()
+		if err != nil {
 			return err
 		}
 
