@@ -44,7 +44,6 @@ var shellCmd = &cobra.Command{
 }
 
 func init() {
-	// TODO: suppress error output
 	Retina.AddCommand(shellCmd)
 	shellCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		cmd.SilenceUsage = true
