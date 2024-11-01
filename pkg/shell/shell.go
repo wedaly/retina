@@ -23,8 +23,14 @@ type Config struct {
 }
 
 func RunInPod(config Config, podNamespace string, podName string) error {
+	ctx := context.Background()
+
 	clientset, err := kubernetes.NewForConfig(config.RestConfig)
 	if err != nil {
+		return err
+	}
+
+	if err := validateOperatingSystemSupportedForPod(ctx, clientset, podNamespace, podName); err != nil {
 		return err
 	}
 
@@ -43,7 +49,6 @@ func RunInPod(config Config, podNamespace string, podName string) error {
 		},
 	}
 
-	ctx := context.Background()
 	pod, err := clientset.CoreV1().
 		Pods(podNamespace).
 		Get(ctx, podName, metav1.GetOptions{})
@@ -68,8 +73,14 @@ func RunInPod(config Config, podNamespace string, podName string) error {
 }
 
 func RunInNode(config Config, nodeName string, debugPodNamespace string) error {
+	ctx := context.Background()
+
 	clientset, err := kubernetes.NewForConfig(config.RestConfig)
 	if err != nil {
+		return err
+	}
+
+	if err := validateOperatingSystemSupportedForNode(ctx, clientset, nodeName); err != nil {
 		return err
 	}
 
@@ -122,7 +133,6 @@ func RunInNode(config Config, nodeName string, debugPodNamespace string) error {
 	}
 
 	// Create the pod
-	ctx := context.Background()
 	_, err = clientset.CoreV1().
 		Pods(debugPodNamespace).
 		Create(ctx, pod, metav1.CreateOptions{})
@@ -199,4 +209,32 @@ func waitForContainerRunning(ctx context.Context, clientset *kubernetes.Clientse
 		case <-time.After(1 * time.Second):
 		}
 	}
+}
+
+func validateOperatingSystemSupportedForPod(ctx context.Context, clientset *kubernetes.Clientset, podNamespace, podName string) error {
+	pod, err := clientset.CoreV1().
+		Pods(podNamespace).
+		Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	nodeName := pod.Spec.NodeName
+	return validateOperatingSystemSupportedForNode(ctx, clientset, nodeName)
+}
+
+func validateOperatingSystemSupportedForNode(ctx context.Context, clientset *kubernetes.Clientset, nodeName string) error {
+	node, err := clientset.CoreV1().
+		Nodes().
+		Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	osLabel := node.Labels["kubernetes.io/os"]
+	if osLabel != "linux" { // Only Linux supported for now.
+		return fmt.Errorf("node %s has unsupported operating system %s", nodeName, osLabel)
+	}
+
+	return nil
 }
