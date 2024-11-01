@@ -116,7 +116,7 @@ func init() {
 	}
 	shellCmd.Flags().StringVar(&retinaShellImageRepo, "retina-shell-image-repo", defaultRetinaShellImageRepo, "The container registry repository for the image to use for the shell container")
 	shellCmd.Flags().StringVar(&retinaShellImageVersion, "retina-shell-image-version", Version, "The version (tag) of the image to use for the shell container")
-	shellCmd.Flags().BoolVar(&mountHostFilesystem, "mount-host-filesystem", false, "Mount the host filesystem to /host and add allow chroot. Applies only to nodes, not pods.")
+	shellCmd.Flags().BoolVar(&mountHostFilesystem, "mount-host-filesystem", false, "Mount the host filesystem to /host and add capability SYS_CHROOT. Applies only to nodes, not pods.")
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())
 	matchVersionFlags = cmdutil.NewMatchVersionFlags(configFlags)
