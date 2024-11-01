@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/microsoft/retina/pkg/shell"
+	"github.com/microsoft/retina/shell"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
