@@ -27,7 +27,18 @@ const defaultRetinaShellImageRepo = "mcr.microsoft.com/containernetworking/retin
 var shellCmd = &cobra.Command{
 	Use:   "shell (NODE | TYPE[[.VERSION].GROUP]/NAME)",
 	Short: "Start a shell in a node or pod",
-	Long:  templates.LongDesc("Start a shell with networking tools in a node or pod for adhoc debugging."),
+	Long: templates.LongDesc(`
+	Start a shell with networking tools in a node or pod for adhoc debugging.
+
+	For nodes, this creates a pod on the node in the root network namespace.
+	For pods, this creates an ephemeral container inside the pod's network namespace.
+
+	It is possible to override the default image used for the shell container either
+	using CLI flags (--retina-shell-image-repo and --retina-shell-image-version) or
+	using environment variables (RETINA_SHELL_IMAGE_REPO and RETINA_SHELL_IMAGE_VERSION),
+	with CLI flags taking precedence.
+`),
+
 	Example: templates.Examples(`
 		# start a shell in a node
 		kubectl retina shell node0001
