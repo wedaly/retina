@@ -8,18 +8,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func validateOperatingSystemSupportedForPod(ctx context.Context, clientset *kubernetes.Clientset, podNamespace, podName string) error {
-	pod, err := clientset.CoreV1().
-		Pods(podNamespace).
-		Get(ctx, podName, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	nodeName := pod.Spec.NodeName
-	return validateOperatingSystemSupportedForNode(ctx, clientset, nodeName)
-}
-
 func validateOperatingSystemSupportedForNode(ctx context.Context, clientset *kubernetes.Clientset, nodeName string) error {
 	node, err := clientset.CoreV1().
 		Nodes().
