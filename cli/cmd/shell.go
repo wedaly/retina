@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/microsoft/retina/pkg/shell"
 	"github.com/spf13/cobra"
@@ -86,8 +87,21 @@ var shellCmd = &cobra.Command{
 func init() {
 	Retina.AddCommand(shellCmd)
 	shellCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		// Avoid printing full usage message if the command exits with an error.
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
+
+		// Allow setting image repo and version via environment variables (CLI flags still take precedence).
+		if !cmd.Flags().Changed("retina-shell-image-repo") {
+			if envRepo := os.Getenv("RETINA_SHELL_IMAGE_REPO"); envRepo != "" {
+				retinaShellImageRepo = envRepo
+			}
+		}
+		if !cmd.Flags().Changed("retina-shell-image-version") {
+			if envVersion := os.Getenv("RETINA_SHELL_IMAGE_VERSION"); envVersion != "" {
+				retinaShellImageVersion = envVersion
+			}
+		}
 	}
 	shellCmd.Flags().StringVar(&retinaShellImageRepo, "retina-shell-image-repo", defaultRetinaShellImageRepo, "The container registry repository for the image to use for the shell container")
 	shellCmd.Flags().StringVar(&retinaShellImageVersion, "retina-shell-image-version", Version, "The version (tag) of the image to use for the shell container")
