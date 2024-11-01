@@ -14,18 +14,14 @@ import (
 )
 
 var (
-	configFlags         *genericclioptions.ConfigFlags
-	matchVersionFlags   *cmdutil.MatchVersionFlags
-	retinaShellImage    string
-	mountHostFilesystem bool
+	configFlags             *genericclioptions.ConfigFlags
+	matchVersionFlags       *cmdutil.MatchVersionFlags
+	retinaShellImageRepo    string
+	retinaShellImageVersion string
+	mountHostFilesystem     bool
 )
 
-var defaultRetinaShellImage string
-
-func init() {
-	const defaultRetinaShellImageRepo = "mcr.microsoft.com/containernetworking/retina-shell" // TODO: This doesn't exist yet
-	defaultRetinaShellImage = fmt.Sprintf("%s:%s", defaultRetinaShellImageRepo, Version)     // match CLI version
-}
+const defaultRetinaShellImageRepo = "mcr.microsoft.com/containernetworking/retina-shell" // TODO: This doesn't exist yet
 
 var shellCmd = &cobra.Command{
 	Use:   "shell (NODE | TYPE[[.VERSION].GROUP]/NAME)",
@@ -67,7 +63,7 @@ var shellCmd = &cobra.Command{
 
 		config := shell.Config{
 			RestConfig:          restConfig,
-			RetinaShellImage:    retinaShellImage,
+			RetinaShellImage:    fmt.Sprintf("%s:%s", retinaShellImageRepo, retinaShellImageVersion),
 			MountHostFilesystem: mountHostFilesystem,
 		}
 
@@ -93,7 +89,8 @@ func init() {
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
 	}
-	shellCmd.Flags().StringVar(&retinaShellImage, "retina-shell-image", defaultRetinaShellImage, "The image to use for the shell container")
+	shellCmd.Flags().StringVar(&retinaShellImageRepo, "retina-shell-image-repo", defaultRetinaShellImageRepo, "The container registry repository for the image to use for the shell container")
+	shellCmd.Flags().StringVar(&retinaShellImageVersion, "retina-shell-image-version", Version, "The version (tag) of the image to use for the shell container")
 	shellCmd.Flags().BoolVar(&mountHostFilesystem, "mount-host-filesystem", false, "Mount the host filesystem to /host and add allow chroot. Applies only to nodes, not pods.")
 	configFlags = genericclioptions.NewConfigFlags(true)
 	configFlags.AddFlags(shellCmd.PersistentFlags())
