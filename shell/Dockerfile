@@ -24,4 +24,6 @@ RUN tdnf install -y \
 	wget \
 	&& tdnf clean all
 
+CMD ["/bin/bash"]
+
 # TODO: set alternatives iptables -> iptables-nft
