@@ -1,7 +1,10 @@
 FROM mcr.microsoft.com/azurelinux/base/core:3.0
 
-# TODO: fix this error from nslookup and dig
-# [ERROR] error:41000066:SCOSSL::Algorithm not supported by SCOSSL:SCOSSL does not support hash algorithm for MAC 4 at /usr/src/azl/BUILD/SymCrypt-OpenSSL-1.5.1/ScosslCommon/src/scossl_mac.c, line 193
+# There are a two known issues with Azure Linux 3.0.20241005 that affect this image:
+# 1. `iptables-nft` binary is not yet installed, but will be fixed by https://github.com/microsoft/azurelinux/pull/10786
+#    Until then, use `nft` to view nftables rules.
+# 2. `nslookup` and `bind` print an error "Algorithm not supported by SCOSSL" (but still complete successfully).
+#    This will be fixed by https://github.com/microsoft/SymCrypt-OpenSSL/pull/92
 RUN tdnf install -y \
 	bind-utils \
 	bpftool \
@@ -25,5 +28,3 @@ RUN tdnf install -y \
 	&& tdnf clean all
 
 CMD ["/bin/bash"]
-
-# TODO: set alternatives iptables -> iptables-nft
