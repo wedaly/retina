@@ -16,8 +16,6 @@ import (
 	"k8s.io/kubectl/pkg/cmd/exec"
 )
 
-const retinaShellCmd = "bash"
-
 type Config struct {
 	RestConfig          *rest.Config
 	RetinaShellImage    string
@@ -165,10 +163,9 @@ func attachToShell(restConfig *rest.Config, namespace string, podName string, co
 			TTY:   true,
 			Quiet: true,
 		},
-		Attach:      &attach.DefaultRemoteAttach{},
-		AttachFunc:  attach.DefaultAttachFunc,
-		Pod:         pod,
-		CommandName: retinaShellCmd,
+		Attach:     &attach.DefaultRemoteAttach{},
+		AttachFunc: attach.DefaultAttachFunc,
+		Pod:        pod,
 	}
 
 	return attachOpts.Run()
