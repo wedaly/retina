@@ -30,13 +30,13 @@ var shellCmd = &cobra.Command{
 	Long: templates.LongDesc(`
 	Start a shell with networking tools in a node or pod for adhoc debugging.
 
-	For nodes, this creates a pod on the node in the root network namespace.
-	For pods, this creates an ephemeral container inside the pod's network namespace.
+	* For nodes, this creates a pod on the node in the root network namespace.
+	* For pods, this creates an ephemeral container inside the pod's network namespace.
 
-	It is possible to override the default image used for the shell container either
-	using CLI flags (--retina-shell-image-repo and --retina-shell-image-version) or
-	using environment variables (RETINA_SHELL_IMAGE_REPO and RETINA_SHELL_IMAGE_VERSION),
-	with CLI flags taking precedence.
+	You can override the default image used for the shell container with either
+	CLI flags (--retina-shell-image-repo and --retina-shell-image-version) or
+	environment variables (RETINA_SHELL_IMAGE_REPO and RETINA_SHELL_IMAGE_VERSION).
+	CLI flags take precedence over env vars.
 `),
 
 	Example: templates.Examples(`
