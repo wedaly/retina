@@ -2,7 +2,7 @@
 
 Retina CLI provides a command to launch an interactive shell in a node or pod for adhoc debugging.
 
-* The CLI command `retina shell` creates a pod with `HostNetwork=true` (for node debugging) or an ephemeral container in an existing pod (for pod debugging).
+* The CLI command `kubectl retina shell` creates a pod with `HostNetwork=true` (for node debugging) or an ephemeral container in an existing pod (for pod debugging).
 * The container runs an image built from the Dockerfile in this directory. The image is based on Azure Linux and includes commonly-used networking tools.
 
 For testing, you can override the image used by `retina shell` either with CLI arguments
