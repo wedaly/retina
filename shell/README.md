@@ -10,5 +10,3 @@ For testing, you can override the image used by `retina shell` either with CLI a
 (`RETINA_SHELL_IMAGE_REPO` and `RETINA_SHELL_IMAGE_VERSION`).
 
 Run `kubectl retina shell -h` for full documentation and examples.
-
-Currently only Linux is supported; Windows support will be added in the future.
