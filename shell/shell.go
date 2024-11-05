@@ -3,7 +3,6 @@ package shell
 import (
 	"context"
 	"fmt"
-	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -33,10 +32,6 @@ func RunInPod(config Config, podNamespace string, podName string) error {
 		return err
 	}
 
-	if err := validateOperatingSystemSupportedForNode(ctx, clientset, pod.Spec.NodeName); err != nil {
-		return err
-	}
-
 	ephemeralContainer := ephemeralContainerForPodDebug(config)
 	pod.Spec.EphemeralContainers = append(pod.Spec.EphemeralContainers, ephemeralContainer)
 
@@ -63,11 +58,12 @@ func RunInNode(config Config, nodeName string, debugPodNamespace string) error {
 		return err
 	}
 
-	if err := validateOperatingSystemSupportedForNode(ctx, clientset, nodeName); err != nil {
+	os, err := getOperatingSystemForNode(ctx, clientset, nodeName)
+	if err != nil {
 		return err
 	}
 
-	pod := hostNetworkPodForNodeDebug(config, debugPodNamespace, nodeName)
+	pod := hostNetworkPodForNodeDebug(config, debugPodNamespace, nodeName, os)
 
 	_, err = clientset.CoreV1().
 		Pods(debugPodNamespace).

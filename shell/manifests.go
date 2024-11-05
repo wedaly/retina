@@ -25,7 +25,15 @@ func ephemeralContainerForPodDebug(config Config) v1.EphemeralContainer {
 	}
 }
 
-func hostNetworkPodForNodeDebug(config Config, debugPodNamespace string, nodeName string) *v1.Pod {
+func hostNetworkPodForNodeDebug(config Config, debugPodNamespace string, nodeName string, os string) *v1.Pod {
+	if os == "windows" {
+		return windowsNodeDebugPod(config, debugPodNamespace, nodeName)
+	} else {
+		return linuxNodeDebugPod(config, debugPodNamespace, nodeName)
+	}
+}
+
+func linuxNodeDebugPod(config Config, debugPodNamespace string, nodeName string) *v1.Pod {
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("retina-shell-%s", utilrand.String(5)),
@@ -75,4 +83,9 @@ func hostNetworkPodForNodeDebug(config Config, debugPodNamespace string, nodeNam
 	}
 
 	return pod
+}
+
+func windowsNodeDebugPod(config Config, debugPodNamespace string, nodeName string) *v1.Pod {
+	// TODO
+	return nil
 }
