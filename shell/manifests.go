@@ -25,8 +25,8 @@ func ephemeralContainerForPodDebug(config Config) v1.EphemeralContainer {
 	}
 }
 
-func hostNetworkPodForNodeDebug(config Config, debugPodNamespace string, nodeName string, os string) *v1.Pod {
-	if os == "windows" {
+func hostNetworkPodForNodeDebug(config Config, debugPodNamespace string, nodeName string, nodeOS string) *v1.Pod {
+	if nodeOS == "windows" {
 		return windowsNodeDebugPod(config, debugPodNamespace, nodeName)
 	} else {
 		return linuxNodeDebugPod(config, debugPodNamespace, nodeName)

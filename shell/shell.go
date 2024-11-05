@@ -3,6 +3,7 @@ package shell
 import (
 	"context"
 	"fmt"
+	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -58,12 +59,12 @@ func RunInNode(config Config, nodeName string, debugPodNamespace string) error {
 		return err
 	}
 
-	os, err := getOperatingSystemForNode(ctx, clientset, nodeName)
+	nodeOS, err := getOperatingSystemForNode(ctx, clientset, nodeName)
 	if err != nil {
 		return err
 	}
 
-	pod := hostNetworkPodForNodeDebug(config, debugPodNamespace, nodeName, os)
+	pod := hostNetworkPodForNodeDebug(config, debugPodNamespace, nodeName, nodeOS)
 
 	_, err = clientset.CoreV1().
 		Pods(debugPodNamespace).
