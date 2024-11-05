@@ -1,0 +1,7 @@
+# mcr.microsoft.com/windows/servercore:ltsc2019
+FROM mcr.microsoft.com/windows/servercore@sha256:b36581f8c38aa45a8eb1849372603fcbfe97befb3c0ad510e9cfc2ccef8fd3ca AS ltsc2019
+CMD ["powershell"]
+
+# mcr.microsoft.com/windows/servercore:ltsc2022
+FROM mcr.microsoft.com/windows/servercore@sha256:134a4de6ea1c905b526e24819ca3756c7897853c1c7fa2cfb48867f173f9f8e9 AS ltsc2022
+CMD ["powershell"]
